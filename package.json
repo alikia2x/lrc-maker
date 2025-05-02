@@ -20,6 +20,7 @@
     "packageManager": "pnpm@8.14.0",
     "type": "module",
     "scripts": {
+        "dev": "vite dev",
         "start": "vite",
         "build": "vite build",
         "fix:fmt": "dprint fmt",
@@ -48,6 +49,6 @@
         "rollup-plugin-swc3": "^0.11.0",
         "toggle-switch-css": "^1.0.3",
         "typescript": "^5.2.2",
-        "vite": "^5.0.0"
+        "vite": "^6.2.6"
     }
 }

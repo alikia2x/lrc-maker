@@ -26,17 +26,26 @@
 }
 
 .line {
-    align-items: baseline;
-    padding: 8px 0 8px 8rem;
+    padding: 10px 0 10px 8rem;
     font-size: 1.2rem;
     white-space: pre-wrap;
     border-top: solid 2px transparent;
     border-bottom: solid 2px transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.line::after {
-    display: inline-block;
-    content: "";
+.move-btn {
+    display: inline-flex;
+    align-items: center;
+    user-select: all;
+    cursor: pointer;
+    color: var(--font-color);
+}
+
+.move-btn-group {
+    display: inline-flex;
 }
 
 .line:nth-child(even) {

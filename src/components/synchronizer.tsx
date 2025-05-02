@@ -1,8 +1,8 @@
 import SSK from "#const/session_key.json" assert { type: "json" };
 import STRINGS from "#const/strings.json" assert { type: "json" };
 import { convertTimeToTag, formatText, type ILyric } from "@lrc-maker/lrc-parser";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import type { IState } from "../hooks/useLrc.js";
+import React, {useCallback, useContext, useEffect, useRef, useState} from "react";
+import {IState } from "../hooks/useLrc.js";
 import { type Action, ActionType } from "../hooks/useLrc.js";
 import { type State as PrefState } from "../hooks/usePref.js";
 import { audioRef, currentTimePubSub } from "../utils/audiomodule.js";
@@ -10,6 +10,8 @@ import { isKeyboardElement } from "../utils/is-keyboard-element.js";
 import { appContext } from "./app.context.js";
 import { AsidePanel } from "./asidepanel.js";
 import { Curser } from "./curser.js";
+import {Backwards100, Backwards25} from "./icons/Backwards";
+import {Forward100, Forward25} from "./icons/Forwards";
 
 const SpaceButton: React.FC<{ sync: () => void }> = ({ sync }) => {
     return (
@@ -31,6 +33,7 @@ interface ISynchronizerProps {
 
 export const Synchronizer: React.FC<ISynchronizerProps> = ({ state, dispatch }) => {
     const self = useRef(Symbol(Synchronizer.name));
+    const [currentAudioTime, setCurrentAudioTime] = useState(0);
 
     const { selectIndex, currentIndex: highlightIndex, lyric } = state;
 
@@ -74,6 +77,7 @@ export const Synchronizer: React.FC<ISynchronizerProps> = ({ state, dispatch }) 
 
     useEffect(() => {
         return currentTimePubSub.sub(self.current, (time) => {
+            setCurrentAudioTime(time);
             dispatch({ type: ActionType.refresh, payload: time });
         });
     }, [dispatch]);
@@ -108,6 +112,13 @@ export const Synchronizer: React.FC<ISynchronizerProps> = ({ state, dispatch }) 
         },
         [dispatch, lyric],
     );
+
+    function moveCursor(delta: number) {
+        const index = state.selectIndex;
+        const line = state.lyric[state.selectIndex];
+        if (!line.time) return;
+        dispatch({ type: ActionType.updateLineTime, payload: { index, time: line.time + delta, audioTime: currentAudioTime } });
+    }
 
     useEffect(() => {
         function onKeydown(ev: KeyboardEvent): void {
@@ -165,19 +176,19 @@ export const Synchronizer: React.FC<ISynchronizerProps> = ({ state, dispatch }) 
             } else if (codeOrKey === "Home") {
                 ev.preventDefault();
 
-                dispatch({ type: ActionType.select, payload: () => 0 });
+                moveCursor(0.1)
             } else if (codeOrKey === "End") {
                 ev.preventDefault();
 
-                dispatch({ type: ActionType.select, payload: () => Infinity });
+                moveCursor(-0.1)
             } else if (codeOrKey === "PageUp") {
                 ev.preventDefault();
 
-                dispatch({ type: ActionType.select, payload: (index) => index - 10 });
+                moveCursor(0.025)
             } else if (codeOrKey === "PageDown") {
                 ev.preventDefault();
 
-                dispatch({ type: ActionType.select, payload: (index) => index + 10 });
+                moveCursor(-0.025);
             }
         }
 
@@ -190,7 +201,7 @@ export const Synchronizer: React.FC<ISynchronizerProps> = ({ state, dispatch }) 
 
     const onLineClick = useCallback(
         (ev: React.MouseEvent<HTMLUListElement & HTMLLIElement>) => {
-            ev.stopPropagation();
+            //ev.stopPropagation();
 
             const target = ev.target as HTMLElement;
 
@@ -250,6 +261,7 @@ export const Synchronizer: React.FC<ISynchronizerProps> = ({ state, dispatch }) 
                     line={line}
                     select={select}
                     prefState={prefState}
+                    dispatch={dispatch}
                 />
             );
         },
@@ -275,18 +287,49 @@ interface ILyricLineProps {
     select: boolean;
     className: string;
     prefState: PrefState;
+    dispatch: React.Dispatch<Action>;
 }
 
-const LyricLine: React.FC<ILyricLineProps> = ({ line, index, select, className, prefState }) => {
+const LyricLine: React.FC<ILyricLineProps> = ({ line, index, select, className, prefState, dispatch }) => {
+    const self = useRef(Symbol(Synchronizer.name));
+    const [currentAudioTime, setCurrentAudioTime] = useState(0);
+
     const lineTime = convertTimeToTag(line.time, prefState.fixed);
 
     const lineText = formatText(line.text, prefState.spaceStart, prefState.spaceEnd);
 
+    function moveCursor(delta: number) {
+        if (!line.time) return;
+        dispatch({ type: ActionType.updateLineTime, payload: { index, time: line.time + delta, audioTime: currentAudioTime } });
+    }
+
+    useEffect(() => {
+        return currentTimePubSub.sub(self.current, (time) => {
+            setCurrentAudioTime(time);
+        });
+    }, [setCurrentAudioTime]);
+
     return (
         <li key={index} data-key={index} className={className}>
-            {select && <Curser fixed={prefState.fixed} />}
-            <time className="line-time">{lineTime}</time>
-            <span className="line-text">{lineText}</span>
+            <div>
+                {select && <Curser fixed={prefState.fixed} />}
+                <time className="line-time">{lineTime}</time>
+                <span className="line-text">{lineText}</span>
+            </div>
+            <div className="move-btn-group">
+                <button className="move-btn" onClick={() => moveCursor(-0.1)}>
+                    <Backwards100 style={{ fontSize: "1.5rem" }} />
+                </button>
+                <button className="move-btn" onClick={() => moveCursor(-0.025)}>
+                    <Backwards25 style={{ fontSize: "1.5rem" }} />
+                </button>
+                <button className="move-btn" onClick={() => moveCursor(0.025)}>
+                    <Forward25 style={{ fontSize: "1.5rem" }} />
+                </button>
+                <button className="move-btn" onClick={() => moveCursor(0.1)}>
+                    <Forward100 style={{ fontSize: "1.5rem" }} />
+                </button>
+            </div>
         </li>
     );
 };

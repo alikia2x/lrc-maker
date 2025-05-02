@@ -22,7 +22,7 @@ interface LangContent {
     languageName: string;
 }
 
-const langMap = await Promise.all(
+export const langMap = await Promise.all(
     langFileList.map(async (f) => {
         const filePath = join(lang_dir, f);
         const fileContent = await readFile(filePath, {

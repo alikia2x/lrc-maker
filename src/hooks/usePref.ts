@@ -1,4 +1,5 @@
 import { useReducer } from "react";
+import { langCodeList } from "../languages";
 
 export const themeColor = {
     orange: "#ff691f",
@@ -43,8 +44,6 @@ const reducer = (state: State, action: Action): State => {
         [action.type]: typeof payload === "function" ? payload(state) : payload,
     };
 };
-
-const langCodeList = i18n.langCodeList;
 
 const init = (lazyInit: () => string): State => {
     const state: Mutable<State> = initState;

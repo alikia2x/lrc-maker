@@ -12,8 +12,8 @@ import { Home } from "./home.js";
 import { AkariNotFound, AkariOdangoLoading } from "./svg.img.js";
 
 const LazyEditor = lazy(async () =>
-    import("./editor.js").then(({ Eidtor }) => {
-        return { default: Eidtor };
+    import("./editor.js").then(({ Editor }) => {
+        return { default: Editor };
     })
 );
 
